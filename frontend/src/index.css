@@ -1,0 +1,96 @@
+:root {
+  --bg: #0f1413;
+  --bg-soft: #151c1a;
+  --surface: #151515;
+  --surface-2: #101010;
+  --text: #f5f2ec;
+  --muted: rgba(245, 242, 236, 0.66);
+  --border: rgba(255, 255, 255, 0.14);
+  --nav-bg: rgba(10, 10, 10, 0.86);
+  --topbar-grad: linear-gradient(130deg, #052f33 0%, #0b5c62 52%, #13846f 100%);
+  --card-grad: linear-gradient(180deg, #151515 0%, #101010 100%);
+  --footer-grad: linear-gradient(180deg, #121212 0%, #0b0b0b 100%);
+  --input-bg: #121212;
+  --input-text: #f5f2ec;
+  --nav-link: rgba(245, 242, 236, 0.84);
+  --nav-link-hover-bg: rgba(255, 255, 255, 0.08);
+  --theme-toggle-bg: rgba(255, 255, 255, 0.08);
+  --theme-toggle-border: rgba(255, 255, 255, 0.2);
+  --theme-toggle-text: #f5f2ec;
+
+  font-family: "Avenir Next", "Nunito Sans", "Segoe UI", sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme='light'] {
+  --bg: #ebe7df;
+  --bg-soft: #f5f2eb;
+  --surface: #ffffff;
+  --surface-2: #f8f6f2;
+  --text: #1e2321;
+  --muted: #6a645a;
+  --border: #ddd5cb;
+  --nav-bg: rgba(255, 255, 255, 0.88);
+  --topbar-grad: linear-gradient(130deg, #0d3d47 0%, #116b70 52%, #18907a 100%);
+  --card-grad: linear-gradient(180deg, #ffffff 0%, #f8f6f2 100%);
+  --footer-grad: linear-gradient(180deg, #f4f0e8 0%, #e9e3d9 100%);
+  --input-bg: #ffffff;
+  --input-text: #1e2321;
+  --nav-link: #2d3d39;
+  --nav-link-hover-bg: rgba(10, 70, 67, 0.08);
+  --theme-toggle-bg: #ffffff;
+  --theme-toggle-border: #cfc5b6;
+  --theme-toggle-text: #263732;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 8% 4%, rgba(19, 132, 111, 0.12) 0, transparent 28%),
+    radial-gradient(circle at 92% 10%, rgba(240, 184, 63, 0.12) 0, transparent 30%),
+    linear-gradient(180deg, var(--bg-soft) 0%, var(--bg) 100%);
+  color: var(--text);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(1.5rem, 2.4vw, 2.4rem);
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover,
+a:focus,
+a:active,
+a:visited {
+  text-decoration: none;
+}

@@ -1,0 +1,25 @@
+import { Router } from 'express'
+import {
+  loginHandler,
+  logoutHandler,
+  meHandler,
+  requestPasswordResetHandler,
+  refreshTokenHandler,
+  registerHandler,
+  resetPasswordHandler,
+  sendVerificationCodeHandler,
+  verifyEmailCodeHandler,
+} from '../controllers/authController'
+import { verifyJWT } from '../middleware/auth'
+
+export const authRouter = Router()
+
+authRouter.post('/register', registerHandler)
+authRouter.post('/send-verification-code', sendVerificationCodeHandler)
+authRouter.post('/verify-email-code', verifyEmailCodeHandler)
+authRouter.post('/request-password-reset', requestPasswordResetHandler)
+authRouter.post('/reset-password', resetPasswordHandler)
+authRouter.post('/login', loginHandler)
+authRouter.post('/refresh', refreshTokenHandler)
+authRouter.post('/logout', verifyJWT, logoutHandler)
+authRouter.get('/me', verifyJWT, meHandler)

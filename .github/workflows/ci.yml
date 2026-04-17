@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      FRONTEND_URL: http://localhost:5173
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
+      TRUST_PROXY: false
+      COOKIE_SECURE: false
+      MONGODB_URI: mongodb://127.0.0.1:27017/expense_tracker_ci
+      JWT_ACCESS_SECRET: ci_access_secret_change_me_1234567890abcdefghijklmnopqrstuvwxyz
+      JWT_REFRESH_SECRET: ci_refresh_secret_change_me_1234567890abcdefghijklmnopqrstuvwxyz
+      ACCESS_TOKEN_EXPIRES_IN: 15m
+      REFRESH_TOKEN_EXPIRES_IN: 7d
+      EMAIL_ENABLED: false
+      ALLOW_TEST_EMAILS: false
+      VITE_API_URL: http://localhost:5000/api/v1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+            frontend/package-lock.json
+            shared/package-lock.json
+
+      - name: Install shared deps
+        run: npm ci --prefix shared
+
+      - name: Build shared
+        run: npm run build --prefix shared
+
+      - name: Install backend deps
+        run: npm ci --prefix backend
+
+      - name: Build backend
+        run: npm run build --prefix backend
+
+      - name: Test backend
+        run: npm run test --prefix backend -- --runInBand
+
+      - name: Install frontend deps
+        run: npm ci --prefix frontend
+
+      - name: Lint frontend
+        run: npm run lint --prefix frontend
+
+      - name: Build frontend
+        run: npm run build --prefix frontend
+
+      - name: Upload backend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+          if-no-files-found: warn
