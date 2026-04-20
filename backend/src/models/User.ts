@@ -1,6 +1,8 @@
 import { Schema, model, type Document } from 'mongoose'
 import bcrypt from 'bcryptjs'
-import type { Role } from '@expense-tracker/shared'
+
+
+type Role = 'admin' | 'staff'
 
 export interface UserDocument extends Document {
   name: string
