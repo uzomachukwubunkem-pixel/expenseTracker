@@ -7,6 +7,11 @@ import { Button } from '../ui/Button'
 
 type ThemeMode = 'dark' | 'light'
 
+type NavItem = {
+  to: string
+  label: string
+}
+
 const THEME_STORAGE_KEY = 'expense-tracker-theme'
 
 export function AppNavbar() {
@@ -35,7 +40,7 @@ export function AppNavbar() {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme)
   }, [theme])
 
-  const navLinks = useMemo(() => {
+  const navLinks = useMemo<NavItem[]>(() => {
     if (!accessToken) {
       return [
         { to: '/', label: 'Home' },
@@ -63,7 +68,7 @@ export function AppNavbar() {
   }
 
   const handleThemeToggle = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
+    setTheme((prev: ThemeMode) => (prev === 'dark' ? 'light' : 'dark'))
   }
 
   return (
@@ -74,11 +79,11 @@ export function AppNavbar() {
         </NavLink>
 
         <div className="app-nav-links">
-          {navLinks.map((link) => (
+          {navLinks.map((link: NavItem) => (
             <NavLink
               key={link.to}
               to={link.to}
-              className={({ isActive }) => `app-nav-link${isActive ? ' is-active' : ''}`}
+              className={({ isActive }: { isActive: boolean }) => `app-nav-link${isActive ? ' is-active' : ''}`}
             >
               {link.label}
             </NavLink>
