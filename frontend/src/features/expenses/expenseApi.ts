@@ -1,5 +1,17 @@
-import type { ExpenseDTO } from '@expense-tracker/shared'
 import { api } from '../../app/api'
+
+ interface ExpenseDTO {
+  id?: string
+  userId?: string
+  amount: number
+  description: string
+  category: string
+  date: string
+  amountExcludingVAT?: number
+  inputVAT?: number
+  deletedAt?: string | null
+}
+
 
 type ExpenseRecord = ExpenseDTO & { _id?: string }
 

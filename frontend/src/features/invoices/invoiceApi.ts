@@ -1,5 +1,18 @@
-import type { InvoiceDTO } from '@expense-tracker/shared'
 import { api } from '../../app/api'
+
+interface InvoiceDTO {
+  id?: string
+  companyId?: string
+  invoiceNumber: string
+  buyerName: string
+  buyerTaxId: string
+  sellerName: string
+  sellerTaxId: string
+  total: number
+  status: 'draft' | 'issued' | 'paid' | 'void'
+  issuedAt: string
+}
+
 
 interface CreateInvoiceResponse {
   success: boolean
