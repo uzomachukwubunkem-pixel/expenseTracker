@@ -54,7 +54,7 @@ jobs:
         run: npm run test --prefix backend -- --runInBand
 
       - name: Install frontend deps
-        run: npm ci --prefix frontend
+        run: npm install --prefix frontend
 
       - name: Lint frontend
         run: npm run lint --prefix frontend
