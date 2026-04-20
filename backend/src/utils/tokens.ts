@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import { env } from '../config/env'
-import type { Role } from '@expense-tracker/shared'
+type Role = 'admin' | 'staff'
 
 interface TokenPayload {
   userId: string
