@@ -14,6 +14,14 @@ interface LoginValues {
   password: string
 }
 
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (typeof error !== 'object' || error === null) return fallback
+
+  const maybeWithData = error as { data?: { message?: unknown } }
+  const message = maybeWithData.data?.message
+  return typeof message === 'string' ? message : fallback
+}
+
 function PasswordVisibilityIcon({ visible }: { visible: boolean }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -48,8 +56,8 @@ export function LoginPage() {
       const response = await login(values).unwrap()
       dispatch(setCredentials({ ...response.data, rememberMe }))
       navigate('/dashboard')
-    } catch (err: any) {
-      const message = err?.data?.message ?? 'Sign in failed'
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Sign in failed')
       if (typeof message === 'string' && message.toLowerCase().includes('not verified')) {
         navigate(`/verify-email?email=${encodeURIComponent(values.email)}`)
         return

@@ -6,6 +6,20 @@ import { useSendVerificationCodeMutation, useVerifyEmailCodeMutation } from './a
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+type ApiFieldError = {
+  path?: string
+  message?: string
+}
+
+const getErrorData = (error: unknown): { message?: string; errors?: ApiFieldError[] } | null => {
+  if (typeof error !== 'object' || error === null) return null
+
+  const maybeWithData = error as { data?: unknown }
+  if (typeof maybeWithData.data !== 'object' || maybeWithData.data === null) return null
+
+  return maybeWithData.data as { message?: string; errors?: ApiFieldError[] }
+}
+
 export function VerifyEmailPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
@@ -38,12 +52,13 @@ export function VerifyEmailPage() {
       await verifyEmailCode({ email: email.trim(), code: code.trim() }).unwrap()
       setInfo('Email verified successfully. You can now sign in.')
       navigate('/login')
-    } catch (err: any) {
-      const detailedIssue = err?.data?.errors?.[0]
+    } catch (err: unknown) {
+      const data = getErrorData(err)
+      const detailedIssue = data?.errors?.[0]
       const detailedMessage = detailedIssue
         ? `${detailedIssue.path ? `${detailedIssue.path}: ` : ''}${detailedIssue.message}`
         : undefined
-      setError(detailedMessage ?? err?.data?.message ?? 'Could not verify email code')
+      setError(detailedMessage ?? data?.message ?? 'Could not verify email code')
     }
   }
 
@@ -59,8 +74,8 @@ export function VerifyEmailPage() {
     try {
       await sendVerificationCode({ email: email.trim() }).unwrap()
       setInfo('A new verification code has been sent to your email.')
-    } catch (err: any) {
-      setError(err?.data?.message ?? 'Could not resend verification code')
+    } catch (err: unknown) {
+      setError(getErrorData(err)?.message ?? 'Could not resend verification code')
     }
   }
 

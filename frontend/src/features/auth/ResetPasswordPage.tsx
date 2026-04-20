@@ -1,8 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { useRequestPasswordResetMutation, useResetPasswordMutation } from './authApi'
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (typeof error !== 'object' || error === null) return fallback
+
+  const maybeWithData = error as { data?: { message?: unknown } }
+  const message = maybeWithData.data?.message
+  return typeof message === 'string' ? message : fallback
+}
 
 function PasswordVisibilityIcon({ visible }: { visible: boolean }) {
   return (
@@ -37,11 +45,6 @@ export function ResetPasswordPage() {
   const [requestPasswordReset, { isLoading: isRequesting }] = useRequestPasswordResetMutation()
   const [resetPassword, { isLoading: isResetting }] = useResetPasswordMutation()
 
-  useEffect(() => {
-    setEmail(defaultEmail)
-    setToken(defaultToken)
-  }, [defaultEmail, defaultToken])
-
   const handleRequestReset = async (event: React.FormEvent) => {
     event.preventDefault()
     setError('')
@@ -50,8 +53,8 @@ export function ResetPasswordPage() {
     try {
       await requestPasswordReset({ email }).unwrap()
       setInfo('If the account exists, a reset link has been sent to that email address.')
-    } catch (err: any) {
-      setError(err?.data?.message ?? 'Could not send password reset link')
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Could not send password reset link'))
     }
   }
 
@@ -69,8 +72,8 @@ export function ResetPasswordPage() {
       await resetPassword({ email, token, password }).unwrap()
       setInfo('Password updated successfully. You can now sign in.')
       navigate('/login')
-    } catch (err: any) {
-      setError(err?.data?.message ?? 'Could not reset password')
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Could not reset password'))
     }
   }
 

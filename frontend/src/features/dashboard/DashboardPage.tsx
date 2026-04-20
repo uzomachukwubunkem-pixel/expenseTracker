@@ -1,5 +1,5 @@
 import { TAX_CONFIG } from '@expense-tracker/shared'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ExpenseForm } from '../expenses/ExpenseForm'
 import { ExpenseList } from '../expenses/ExpenseList'
 import {
@@ -12,28 +12,42 @@ import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { useAppSelector } from '../../hooks/redux'
 
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (typeof error !== 'object' || error === null) return fallback
+
+  const maybeWithData = error as { data?: { message?: unknown } }
+  const message = maybeWithData.data?.message
+  return typeof message === 'string' ? message : fallback
+}
+
+type DraftCompanySettings = {
+  legalName: string
+  taxId: string
+  yearlyTurnover: string
+}
+
 export function DashboardPage() {
   const authUser = useAppSelector((state) => state.auth.user)
 
-  const now = new Date()
-  const start = new Date(now.getFullYear(), 0, 1).toISOString()
-  const end = now.toISOString()
+  const { start, end, currentMonthLabel } = useMemo(() => {
+    const now = new Date()
+    return {
+      start: new Date(now.getFullYear(), 0, 1).toISOString(),
+      end: now.toISOString(),
+      currentMonthLabel: now.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
+    }
+  }, [])
+
   const { data, isLoading } = useTaxSummaryQuery({ start, end })
   const { data: companyData } = useCompanySettingsQuery()
   const [upsertCompanySettings, { isLoading: isSavingSettings }] = useUpsertCompanySettingsMutation()
   const [settingsError, setSettingsError] = useState('')
   const [settingsInfo, setSettingsInfo] = useState('')
+  const [draftSettings, setDraftSettings] = useState<DraftCompanySettings | null>(null)
 
-  const [legalName, setLegalName] = useState(companyData?.data.legalName ?? '')
-  const [taxId, setTaxId] = useState(companyData?.data.taxId ?? '')
-  const [yearlyTurnover, setYearlyTurnover] = useState(String(companyData?.data.yearlyTurnover ?? 0))
-
-  useEffect(() => {
-    if (!companyData?.data) return
-    setLegalName(companyData.data.legalName ?? '')
-    setTaxId(companyData.data.taxId ?? '')
-    setYearlyTurnover(String(companyData.data.yearlyTurnover ?? 0))
-  }, [companyData])
+  const legalName = draftSettings?.legalName ?? (companyData?.data.legalName ?? '')
+  const taxId = draftSettings?.taxId ?? (companyData?.data.taxId ?? '')
+  const yearlyTurnover = draftSettings?.yearlyTurnover ?? String(companyData?.data.yearlyTurnover ?? 0)
 
   const needsOnboarding = !companyData?.data.legalName || Number(companyData?.data.yearlyTurnover ?? 0) === 0
 
@@ -49,8 +63,9 @@ export function DashboardPage() {
         yearlyTurnover: Number(yearlyTurnover),
       }).unwrap()
       setSettingsInfo('Company settings saved successfully.')
-    } catch (err: any) {
-      setSettingsError(err?.data?.message ?? 'Could not save company settings')
+      setDraftSettings(null)
+    } catch (err: unknown) {
+      setSettingsError(getErrorMessage(err, 'Could not save company settings'))
     }
   }
 
@@ -59,11 +74,6 @@ export function DashboardPage() {
   const totalExpenses = Number(data?.data.totalExpenses ?? 0)
   const estimatedProfit = Number(data?.data.estimatedProfit ?? 0)
   const vatStatusText = turnover >= TAX_CONFIG.VAT_THRESHOLD ? 'VAT registration required' : 'Within small-company threshold'
-
-  const currentMonthLabel = useMemo(
-    () => now.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
-    [now],
-  )
 
   return (
     <div className="page-shell">
@@ -127,7 +137,13 @@ export function DashboardPage() {
                   <Input
                     type="text"
                     value={legalName}
-                    onChange={(event) => setLegalName(event.target.value)}
+                    onChange={(event) =>
+                      setDraftSettings((current) => ({
+                        legalName: event.target.value,
+                        taxId: current?.taxId ?? taxId,
+                        yearlyTurnover: current?.yearlyTurnover ?? yearlyTurnover,
+                      }))
+                    }
                     required
                   />
                 </label>
@@ -136,7 +152,13 @@ export function DashboardPage() {
                   <Input
                     type="text"
                     value={taxId}
-                    onChange={(event) => setTaxId(event.target.value)}
+                    onChange={(event) =>
+                      setDraftSettings((current) => ({
+                        legalName: current?.legalName ?? legalName,
+                        taxId: event.target.value,
+                        yearlyTurnover: current?.yearlyTurnover ?? yearlyTurnover,
+                      }))
+                    }
                     required
                   />
                 </label>
@@ -147,7 +169,13 @@ export function DashboardPage() {
                     min="0"
                     step="0.01"
                     value={yearlyTurnover}
-                    onChange={(event) => setYearlyTurnover(event.target.value)}
+                    onChange={(event) =>
+                      setDraftSettings((current) => ({
+                        legalName: current?.legalName ?? legalName,
+                        taxId: current?.taxId ?? taxId,
+                        yearlyTurnover: event.target.value,
+                      }))
+                    }
                     required
                   />
                 </label>
