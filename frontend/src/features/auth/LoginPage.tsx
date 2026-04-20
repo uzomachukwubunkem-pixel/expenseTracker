@@ -1,6 +1,3 @@
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLoginMutation } from './authApi'
@@ -9,17 +6,6 @@ import { useAppDispatch } from '../../hooks/redux'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 
-interface LoginValues {
-  email: string
-  password: string
-}
-
-const loginSchema = z
-  .object({
-    email: z.string().email('Enter a valid email address'),
-    password: z.string().min(8, 'Password must be at least 8 characters').max(100),
-  })
- 
 
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
@@ -48,26 +34,25 @@ function PasswordVisibilityIcon({ visible }: { visible: boolean }) {
 export function LoginPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const [formData, setFormData] = useState({ email:"", password: ""})
   const [login, { isLoading }] = useLoginMutation()
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
 
-  const { register, handleSubmit } = useForm<LoginValues>({
-    resolver: zodResolver(loginSchema),
-  })
 
-  const onSubmit = async (values: LoginValues) => {
+  const onSubmit = async (event: { preventDefault: () => void }) => {
+    event.preventDefault();
     setError('')
 
     try {
-      const response = await login(values).unwrap()
+      const response = await login(formData).unwrap()
       dispatch(setCredentials({ ...response.data, rememberMe }))
       navigate('/dashboard')
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Sign in failed')
       if (typeof message === 'string' && message.toLowerCase().includes('not verified')) {
-        navigate(`/verify-email?email=${encodeURIComponent(values.email)}`)
+        navigate(`/verify-email?email=${formData.email}`)
         return
       }
       setError(message)
@@ -78,15 +63,15 @@ export function LoginPage() {
     <main className="page-shell auth-shell">
       <section className="card auth-card">
         <h1>Sign in</h1>
-        <form className="form-grid" onSubmit={handleSubmit(onSubmit)}>
+        <form className="form-grid" onSubmit={onSubmit}>
           <label>
             Email
-            <Input type="email" {...register('email')} />
+            <Input type="email" onChange={(event) => setFormData({...formData, email: event.target.value})} />
           </label>
           <label>
             Password
             <div className="password-field">
-              <Input type={showPassword ? 'text' : 'password'} {...register('password')} />
+              <Input type={showPassword ? 'text' : 'password'} onChange={(event) => setFormData({...formData, password: event.target.value})}/>
               <button
                 type="button"
                 className="password-toggle"
