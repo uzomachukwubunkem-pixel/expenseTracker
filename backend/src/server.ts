@@ -22,7 +22,7 @@ const start = async (): Promise<void> => {
 
   startTurnoverMonitorJob()
 
-  app.listen(env.port, () => {
+  app.listen(env.port || 4000, () => {
     logger.info(`Backend listening on port ${env.port}`)
   })
 }
