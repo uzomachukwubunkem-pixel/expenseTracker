@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { loginSchema } from '@expense-tracker/shared'
+import { z } from 'zod'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLoginMutation } from './authApi'
@@ -13,6 +13,14 @@ interface LoginValues {
   email: string
   password: string
 }
+
+const loginSchema = z
+  .object({
+    email: z.string().email('Enter a valid email address'),
+    password: z.string().min(8, 'Password must be at least 8 characters').max(100),
+  })
+ 
+
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
   if (typeof error !== 'object' || error === null) return fallback

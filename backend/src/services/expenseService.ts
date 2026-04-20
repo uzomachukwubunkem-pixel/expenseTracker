@@ -1,4 +1,4 @@
-import { expenseQuerySchema, expenseSchema } from '@expense-tracker/shared'
+import { expenseQuerySchema, expenseSchema } from '../utils/validator-schema'
 import { ExpenseModel } from '../models/Expense'
 import { AppError } from '../utils/appError'
 

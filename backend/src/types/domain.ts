@@ -1,4 +1,4 @@
-import type { Role } from './tax.js'
+import type { Role } from './tax.ts'
 
 export interface ExpenseDTO {
   id?: string

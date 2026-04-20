@@ -1,5 +1,5 @@
 import { Schema, model, type Document, Types } from 'mongoose'
-import { computeInputVAT } from '@expense-tracker/shared'
+import { computeInputVAT } from '../utils/tax'
 import { AuditLogModel } from './AuditLog'
 
 interface ExpenseDocument extends Document {

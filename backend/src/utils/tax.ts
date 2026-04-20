@@ -1,4 +1,4 @@
-import { TAX_CONFIG } from '../constants/taxConfig.js'
+import { TAX_CONFIG } from '../config/constants'
 
 export const computeInputVAT = (amountExcludingVAT: number): number =>
   Number((amountExcludingVAT * TAX_CONFIG.VAT_RATE).toFixed(2))

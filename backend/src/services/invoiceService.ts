@@ -1,4 +1,4 @@
-import { invoiceSchema } from '@expense-tracker/shared'
+import { invoiceSchema } from '../utils/validator-schema'
 import { CompanySettingsModel } from '../models/CompanySettings'
 import { InvoiceModel } from '../models/Invoice'
 import { AppError } from '../utils/appError'

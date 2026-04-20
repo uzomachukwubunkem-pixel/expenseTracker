@@ -1,4 +1,4 @@
-import { TAX_CONFIG } from '@expense-tracker/shared'
+import { TAX_CONFIG } from "../../utils/constants"
 import { useMemo, useState } from 'react'
 import { ExpenseForm } from '../expenses/ExpenseForm'
 import { ExpenseList } from '../expenses/ExpenseList'

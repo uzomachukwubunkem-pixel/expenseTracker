@@ -1,4 +1,4 @@
-import { TAX_CONFIG } from '@expense-tracker/shared'
+import { TAX_CONFIG } from '../config/constants'
 import { AlertModel } from '../models/Alert'
 import { CompanySettingsModel } from '../models/CompanySettings'
 

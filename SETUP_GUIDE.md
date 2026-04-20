@@ -21,6 +21,7 @@ npm install --prefix frontend
 ### 2. Environment Configuration
 
 Security baseline:
+
 - Copy from `.env.example` files and keep real `.env` files local only.
 - Never commit real secrets (database URIs, JWT secrets, OAuth tokens) to version control.
 - Rotate secrets immediately if they are ever exposed.
@@ -327,7 +328,7 @@ Returns alerts when turnover approaches thresholds:
 
 #### List Audit Logs
 
-```bash
+````bash
 GET /api/v1/audit-logs
 Authorization: Bearer {adminToken}
 
@@ -352,7 +353,7 @@ Returns immutable log of all changes:
 ```bash
 GET /api/v1/users?role=staff&page=1&limit=25&q=jane
 Authorization: Bearer {adminToken}
-```
+````
 
 #### Update User Role
 
@@ -377,7 +378,8 @@ Content-Type: application/json
   "isActive": false
 }
 ```
-```
+
+````
 
 ---
 
@@ -393,7 +395,7 @@ All tax logic is in `shared/src/utils/tax.ts` and used by both backend and front
 
 ```typescript
 const inputVAT = amount * 0.075;
-```
+````
 
 ### CIT (Corporate Income Tax)
 
@@ -467,7 +469,38 @@ npm run test -- --coverage
 
 ### Microsoft Azure (Container Apps + ACR)
 
-1. **Create Azure resources**:
+#### GitHub Actions deployment path
+
+Use this when Docker Desktop is unavailable on your machine. GitHub Actions will build the images, push them to Azure Container Registry, and update both Container Apps.
+
+Required GitHub repository secrets:
+
+Repository variables / OIDC values:
+
+- `AZURE_CLIENT_ID` - Azure app registration client ID for OIDC login
+- `AZURE_TENANT_ID` - Azure tenant ID
+- `AZURE_SUBSCRIPTION_ID` - Azure subscription ID
+- `AZURE_RESOURCE_GROUP` - Azure resource group name
+- `AZURE_BACKEND_APP_NAME` - Backend Container App name
+- `AZURE_FRONTEND_APP_NAME` - Frontend Container App name
+- `ACR_NAME` - Azure Container Registry name
+- `FRONTEND_API_URL` - Public backend API URL used at frontend build time
+
+You also need to create a federated credential on the Azure app registration so GitHub Actions can log in without storing an Azure secret JSON.
+
+Workflow file:
+
+- [`.github/workflows/deploy-azure.yml`](.github/workflows/deploy-azure.yml)
+
+Flow:
+
+1. Push code to `main`.
+2. GitHub Actions builds backend and frontend images.
+3. GitHub Actions pushes both images to ACR.
+4. GitHub Actions updates the backend and frontend Container Apps.
+5. You verify the live app with a smoke test.
+
+6. **Create Azure resources**:
 
 ```bash
 az login

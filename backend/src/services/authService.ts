@@ -5,7 +5,7 @@ import {
   resetPasswordSchema,
   sendVerificationCodeSchema,
   verifyEmailCodeSchema,
-} from '@expense-tracker/shared'
+} from '../utils/validator-schema'
 import crypto from 'node:crypto'
 import { env } from '../config/env'
 import { RefreshTokenModel } from '../models/RefreshToken'

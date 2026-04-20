@@ -1,11 +1,13 @@
 import {
   TAX_CONFIG,
-  calculatePresumptiveTax,
+ 
+} from '../config/constants'
+
+import {  calculatePresumptiveTax,
   estimateCIT,
   isCITExempt,
   isVATExempt,
-  computeInputVAT,
-} from '@expense-tracker/shared'
+  computeInputVAT } from "../utils/tax"
 import { CompanySettingsModel } from '../models/CompanySettings.js'
 import { ExpenseModel } from '../models/Expense.js'
 
