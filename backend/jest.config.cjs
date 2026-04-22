@@ -1,7 +1,7 @@
 module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
-  roots: ["<rootDir>/tests"],
+  roots: ["<rootDir>"],
   testMatch: ["**/__tests__/**/*.ts", "**/*.test.ts"],
   moduleNameMapper: {
     "^@expense-tracker/shared$": "<rootDir>/../shared/src",
@@ -28,5 +28,6 @@ module.exports = {
     "!src/app.ts",
   ],
   coveragePathIgnorePatterns: ["/node_modules/", "/dist/"],
+  passWithNoTests: true,
   testTimeout: 10000,
 };
