@@ -42,14 +42,17 @@ jobs:
       - name: Build And Push Backend Image
         run: |
           BACKEND_IMAGE="$ACR_LOGIN_SERVER/expense-backend:${{ github.sha }}"
-          docker build -t "$BACKEND_IMAGE" ./backend
+          ls -la ./backend
+          docker build -f ./backend/Dockerfile -t "$BACKEND_IMAGE" ./backend
           docker push "$BACKEND_IMAGE"
           echo "BACKEND_IMAGE=$BACKEND_IMAGE" >> "$GITHUB_ENV"
 
       - name: Build And Push Frontend Image
         run: |
           FRONTEND_IMAGE="$ACR_LOGIN_SERVER/expense-frontend:${{ github.sha }}"
+          ls -la ./frontend
           docker build \
+            -f ./frontend/Dockerfile \
             --build-arg VITE_API_URL="${{ vars.FRONTEND_API_URL }}" \
             -t "$FRONTEND_IMAGE" \
             ./frontend
