@@ -40,22 +40,24 @@ jobs:
           az acr login --name "$ACR_NAME"
 
       - name: Build And Push Backend Image
+        working-directory: backend
         run: |
           BACKEND_IMAGE="$ACR_LOGIN_SERVER/expense-backend:${{ github.sha }}"
-          ls -la ./backend
-          docker build -f ./backend/Dockerfile -t "$BACKEND_IMAGE" ./backend
+          ls -la .
+          docker build -f Dockerfile -t "$BACKEND_IMAGE" .
           docker push "$BACKEND_IMAGE"
           echo "BACKEND_IMAGE=$BACKEND_IMAGE" >> "$GITHUB_ENV"
 
       - name: Build And Push Frontend Image
+        working-directory: frontend
         run: |
           FRONTEND_IMAGE="$ACR_LOGIN_SERVER/expense-frontend:${{ github.sha }}"
-          ls -la ./frontend
+          ls -la .
           docker build \
-            -f ./frontend/Dockerfile \
+            -f Dockerfile \
             --build-arg VITE_API_URL="${{ vars.FRONTEND_API_URL }}" \
             -t "$FRONTEND_IMAGE" \
-            ./frontend
+            .
           docker push "$FRONTEND_IMAGE"
           echo "FRONTEND_IMAGE=$FRONTEND_IMAGE" >> "$GITHUB_ENV"
 
