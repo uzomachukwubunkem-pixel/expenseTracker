@@ -1,4 +1,4 @@
-import type { Role } from '@expense-tracker/shared'
+import type { Role } from '../types/tax'
 
 declare global {
   namespace Express {

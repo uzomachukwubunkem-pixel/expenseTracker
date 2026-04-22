@@ -1,0 +1,125 @@
+name: Deploy To Azure Container Apps
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - backend/**
+      - frontend/**
+      - .github/workflows/deploy-azure.yml
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+  BACKEND_APP_NAME: ${{ vars.AZURE_BACKEND_APP_NAME }}
+  FRONTEND_APP_NAME: ${{ vars.AZURE_FRONTEND_APP_NAME }}
+  ACR_NAME: ${{ vars.ACR_NAME }}
+  ACR_LOGIN_SERVER: ${{ vars.ACR_NAME }}.azurecr.io
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: ACR Login
+        run: |
+          az acr login --name "$ACR_NAME"
+
+      - name: Build And Push Backend Image
+        run: |
+          BACKEND_IMAGE="$ACR_LOGIN_SERVER/expense-backend:${{ github.sha }}"
+          docker build -t "$BACKEND_IMAGE" ./backend
+          docker push "$BACKEND_IMAGE"
+          echo "BACKEND_IMAGE=$BACKEND_IMAGE" >> "$GITHUB_ENV"
+
+      - name: Build And Push Frontend Image
+        run: |
+          FRONTEND_IMAGE="$ACR_LOGIN_SERVER/expense-frontend:${{ github.sha }}"
+          docker build \
+            --build-arg VITE_API_URL="${{ vars.FRONTEND_API_URL }}" \
+            -t "$FRONTEND_IMAGE" \
+            ./frontend
+          docker push "$FRONTEND_IMAGE"
+          echo "FRONTEND_IMAGE=$FRONTEND_IMAGE" >> "$GITHUB_ENV"
+
+      - name: Ensure Backend Container App Exists
+        run: |
+          if az containerapp show --name "$BACKEND_APP_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
+            echo "Backend app exists"
+          else
+            az containerapp create \
+              --name "$BACKEND_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --environment "${{ vars.AZURE_CONTAINERAPPS_ENV_NAME }}" \
+              --image "$BACKEND_IMAGE" \
+              --target-port 5000 \
+              --ingress external \
+              --registry-server "$ACR_LOGIN_SERVER" \
+              --registry-username "${{ secrets.ACR_USERNAME }}" \
+              --registry-password "${{ secrets.ACR_PASSWORD }}" \
+              --env-vars \
+                NODE_ENV=production \
+                PORT=5000 \
+                COOKIE_SECURE=true \
+                TRUST_PROXY=true \
+                FRONTEND_URL="${{ vars.FRONTEND_URL }}" \
+                CORS_ALLOWED_ORIGINS="${{ vars.CORS_ALLOWED_ORIGINS }}" \
+                MONGODB_URI="${{ secrets.MONGODB_URI }}" \
+                JWT_ACCESS_SECRET="${{ secrets.JWT_ACCESS_SECRET }}" \
+                JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}" \
+                SMTP_HOST="${{ secrets.SMTP_HOST }}" \
+                SMTP_PORT="${{ secrets.SMTP_PORT }}" \
+                SMTP_USER="${{ secrets.SMTP_USER }}" \
+                SMTP_PASS="${{ secrets.SMTP_PASS }}" \
+                SMTP_FROM="${{ secrets.SMTP_FROM }}"
+          fi
+
+      - name: Ensure Frontend Container App Exists
+        run: |
+          if az containerapp show --name "$FRONTEND_APP_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
+            echo "Frontend app exists"
+          else
+            az containerapp create \
+              --name "$FRONTEND_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --environment "${{ vars.AZURE_CONTAINERAPPS_ENV_NAME }}" \
+              --image "$FRONTEND_IMAGE" \
+              --target-port 80 \
+              --ingress external \
+              --registry-server "$ACR_LOGIN_SERVER" \
+              --registry-username "${{ secrets.ACR_USERNAME }}" \
+              --registry-password "${{ secrets.ACR_PASSWORD }}"
+          fi
+
+      - name: Update Backend Container App
+        run: |
+          az containerapp update \
+            --name "$BACKEND_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "$BACKEND_IMAGE"
+
+      - name: Update Frontend Container App
+        run: |
+          az containerapp update \
+            --name "$FRONTEND_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "$FRONTEND_IMAGE"
+
+      - name: Deployment Summary
+        run: |
+          echo "Backend image: $BACKEND_IMAGE"
+          echo "Frontend image: $FRONTEND_IMAGE"

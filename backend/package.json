@@ -11,7 +11,6 @@
     "test": "jest --coverage --config jest.config.cjs"
   },
   "dependencies": {
-    "@expense-tracker/shared": "file:../shared",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
