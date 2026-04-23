@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'
 import { env } from '../config/env'
 import { asyncHandler } from '../middleware/asyncHandler'
+import { AppError } from '../utils/appError'
 import {
   login,
   logout,
@@ -53,6 +54,9 @@ export const loginHandler = asyncHandler(async (req: Request, res: Response) => 
 
 export const refreshTokenHandler = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refreshToken
+  if (!refreshToken) {
+    throw new AppError('Missing refresh token', 401)
+  }
   const result = await rotateRefreshToken(refreshToken)
   res.cookie('refreshToken', result.refreshToken, refreshCookieOptions)
   res.json({ success: true, data: { accessToken: result.accessToken } })

@@ -113,6 +113,9 @@ const authSlice = createSlice({
 
       clearPersistedState(true)
     },
+    setAccessToken: (state, action: PayloadAction<string | undefined>) => {
+      state.accessToken = action.payload
+    },
     applyRemoteAuthState: (state, action: PayloadAction<PersistedAuthState | null>) => {
       if (!action.payload) {
         state.accessToken = undefined
@@ -133,5 +136,5 @@ const authSlice = createSlice({
   },
 })
 
-export const { setCredentials, clearCredentials, applyRemoteAuthState, setBootstrapping } = authSlice.actions
+export const { setCredentials, clearCredentials, setAccessToken, applyRemoteAuthState, setBootstrapping } = authSlice.actions
 export default authSlice.reducer
