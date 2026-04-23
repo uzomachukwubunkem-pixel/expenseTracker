@@ -157,6 +157,18 @@ export function AppNavbar() {
         className={`app-nav-mobile-drawer${isMobileMenuOpen ? ' is-open' : ''}`}
         aria-hidden={!isMobileMenuOpen}
       >
+        <div className="app-nav-mobile-drawer-header">
+          <span className="app-nav-mobile-drawer-title">Menu</span>
+          <button
+            type="button"
+            className="app-nav-mobile-close"
+            onClick={closeMobileMenu}
+            aria-label="Close navigation menu"
+          >
+            <span aria-hidden="true">✕</span>
+          </button>
+        </div>
+
         <div className="app-nav-mobile-section">
           {navLinks.map((link: NavItem) => (
             <NavLink
