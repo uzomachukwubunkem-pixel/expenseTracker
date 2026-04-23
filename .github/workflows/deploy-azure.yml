@@ -115,7 +115,22 @@ jobs:
           az containerapp update \
             --name "$BACKEND_APP_NAME" \
             --resource-group "$RESOURCE_GROUP" \
-            --image "$BACKEND_IMAGE"
+            --image "$BACKEND_IMAGE" \
+            --set-env-vars \
+              NODE_ENV=production \
+              PORT=5000 \
+              COOKIE_SECURE=true \
+              TRUST_PROXY=true \
+              FRONTEND_URL="${{ vars.FRONTEND_URL }}" \
+              CORS_ALLOWED_ORIGINS="${{ vars.CORS_ALLOWED_ORIGINS }}" \
+              MONGODB_URI="${{ secrets.MONGODB_URI }}" \
+              JWT_ACCESS_SECRET="${{ secrets.JWT_ACCESS_SECRET }}" \
+              JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}" \
+              SMTP_HOST="${{ secrets.SMTP_HOST }}" \
+              SMTP_PORT="${{ secrets.SMTP_PORT }}" \
+              SMTP_USER="${{ secrets.SMTP_USER }}" \
+              SMTP_PASS="${{ secrets.SMTP_PASS }}" \
+              SMTP_FROM="${{ secrets.SMTP_FROM }}"
 
       - name: Update Frontend Container App
         run: |
