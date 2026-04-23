@@ -24,6 +24,7 @@ export function VerifyEmailPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const defaultEmail = (params.get('email') ?? '').trim().toLowerCase()
+  const companyId = (params.get('companyId') ?? '').trim()
 
   const [email, setEmail] = useState(defaultEmail)
   const [code, setCode] = useState('')
@@ -83,6 +84,11 @@ export function VerifyEmailPage() {
     <main className="page-shell auth-shell">
       <section className="card auth-card">
         <h1>Verify your email</h1>
+        {companyId ? (
+          <p className="info-text">
+            Your company ID is <strong>{companyId}</strong>. Share it with staff so they can register under your company.
+          </p>
+        ) : null}
         <form className="form-grid" onSubmit={handleVerify}>
           <label>
             Email

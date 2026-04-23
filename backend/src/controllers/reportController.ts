@@ -39,7 +39,16 @@ export const getCompanySettingsHandler = asyncHandler(async (_req: Request, res:
 })
 
 export const upsertCompanySettingsHandler = asyncHandler(async (req: Request, res: Response) => {
-  const data = await upsertCompanySettings(req.body)
+  if (!req.user) {
+    res.status(401).json({ success: false, message: 'Unauthorized' })
+    return
+  }
+
+  const data = await upsertCompanySettings(req.body, {
+    userId: req.user.userId,
+    role: req.user.role,
+    companyId: req.user.companyId,
+  })
   res.json({ success: true, data })
 })
 

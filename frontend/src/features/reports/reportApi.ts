@@ -6,6 +6,7 @@ interface CompanySettingsResponse {
     legalName: string
     taxId: string
     yearlyTurnover: number
+    companyId?: string
   }
 }
 

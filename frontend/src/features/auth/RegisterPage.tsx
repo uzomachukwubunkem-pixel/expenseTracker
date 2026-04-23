@@ -17,6 +17,15 @@ const registerFormSchema = z
     companyId: z.string().max(100, 'Company ID is too long').optional(),
     role: z.enum(['staff', 'admin']),
   })
+  .superRefine((data, ctx) => {
+    if (data.role === 'staff' && !data.companyId?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['companyId'],
+        message: 'Company ID is required for staff accounts',
+      })
+    }
+  })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
@@ -48,6 +57,7 @@ export function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerFormSchema),
@@ -55,6 +65,9 @@ export function RegisterPage() {
       role: 'staff',
     },
   })
+
+  const selectedRole = watch('role')
+  const isStaffRole = selectedRole === 'staff'
 
   const onSubmit = async (values: RegisterValues) => {
     await registerUser({
@@ -119,15 +132,23 @@ export function RegisterPage() {
           </label>
           <label>
             Company ID
-            <Input type="text" placeholder="e.g. acme-ng" {...register('companyId')} />
+            <Input
+              type="text"
+              placeholder={isStaffRole ? 'Ask your admin for the company ID' : 'Leave blank to create one'}
+              {...register('companyId')}
+            />
             {errors.companyId ? <p className="error-text">{errors.companyId.message}</p> : null}
-            <p className="muted">Optional. Leave blank to create a personal workspace.</p>
+            <p className="muted">
+              {isStaffRole
+                ? 'Required for staff. Use the company ID provided by your admin.'
+                : 'Optional for admins. Leave blank to create a new company ID automatically.'}
+            </p>
           </label>
           <label>
             Role
             <select className="form-input" {...register('role')}>
-              <option value="staff">Staff</option>
-              <option value="admin">Admin</option>
+              <option value="staff">Staff - join an existing company</option>
+              <option value="admin">Admin - create a new company</option>
             </select>
           </label>
           <Button type="submit" disabled={isLoading}>

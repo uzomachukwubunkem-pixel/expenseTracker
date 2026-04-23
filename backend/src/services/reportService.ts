@@ -1,5 +1,7 @@
+import crypto from 'node:crypto'
 import { ExpenseModel } from '../models/Expense'
 import { CompanySettingsModel } from '../models/CompanySettings'
+import { UserModel } from '../models/User'
 import { AppError } from '../utils/appError'
 import {
   calculatePresumptiveTaxForTurnover,
@@ -12,6 +14,41 @@ interface CompanySettingsInput {
   legalName: string
   taxId: string
   yearlyTurnover: number
+}
+
+interface CompanySettingsActor {
+  userId: string
+  role: 'admin' | 'staff'
+  companyId: string
+}
+
+const generateCompanyId = (): string => `cmp-${crypto.randomUUID()}`
+
+const ensureCompanyIdForAdmin = async (actor: CompanySettingsActor): Promise<string> => {
+  if (actor.role !== 'admin') {
+    throw new AppError('Only admins can register company details', 403)
+  }
+
+  const currentUser = await UserModel.findById(actor.userId).select('companyId').lean()
+  if (!currentUser) {
+    throw new AppError('User not found', 404)
+  }
+
+  if (!currentUser.companyId.startsWith('pending-')) {
+    return currentUser.companyId
+  }
+
+  let companyId = generateCompanyId()
+  while (await UserModel.exists({ companyId })) {
+    companyId = generateCompanyId()
+  }
+
+  const user = await UserModel.findByIdAndUpdate(actor.userId, { companyId }, { new: true }).lean()
+  if (!user) {
+    throw new AppError('User not found', 404)
+  }
+
+  return companyId
 }
 
 export const getTaxSummary = async (period: { start: Date; end: Date }) => {
@@ -53,7 +90,7 @@ export const getCompanySettings = async () => {
   }
 }
 
-export const upsertCompanySettings = async (payload: CompanySettingsInput) => {
+export const upsertCompanySettings = async (payload: CompanySettingsInput, actor: CompanySettingsActor) => {
   const legalName = String(payload.legalName ?? '').trim()
   const taxId = String(payload.taxId ?? '').trim()
   const yearlyTurnover = Number(payload.yearlyTurnover ?? 0)
@@ -63,6 +100,8 @@ export const upsertCompanySettings = async (payload: CompanySettingsInput) => {
   if (!Number.isFinite(yearlyTurnover) || yearlyTurnover < 0) {
     throw new AppError('Yearly turnover must be a valid non-negative number', 400)
   }
+
+  const companyId = await ensureCompanyIdForAdmin(actor)
 
   const existing = await CompanySettingsModel.findOne()
 
@@ -78,6 +117,7 @@ export const upsertCompanySettings = async (payload: CompanySettingsInput) => {
       legalName: created.legalName,
       taxId: created.taxId,
       yearlyTurnover: created.yearlyTurnover,
+      companyId,
     }
   }
 
@@ -90,5 +130,6 @@ export const upsertCompanySettings = async (payload: CompanySettingsInput) => {
     legalName: existing.legalName,
     taxId: existing.taxId,
     yearlyTurnover: existing.yearlyTurnover,
+    companyId,
   }
 }

@@ -28,7 +28,8 @@ const hashResetToken = (token: string): string => crypto.createHash('sha256').up
 
 const normalizeCompanyId = (value: string): string => value.trim().toLowerCase()
 const normalizeEmail = (value: string): string => value.trim().toLowerCase()
-const generatePersonalCompanyId = (): string => `solo-${randomId()}`
+const generateCompanyId = (): string => `cmp-${randomId()}`
+const generatePendingCompanyId = (): string => `pending-${randomId()}`
 
 const generateVerificationCode = (): string =>
   Math.floor(100000 + Math.random() * 900000).toString()
@@ -66,19 +67,36 @@ export const register = async (payload: unknown) => {
     ? normalizeCompanyId(parsed.companyId)
     : undefined
 
-  let companyId = requestedCompanyId ?? generatePersonalCompanyId()
-
   const exists = await UserModel.findOne({ email }).lean()
   if (exists) throw new AppError('Email already in use', 409)
 
-  if (resolvedRole === 'staff' && requestedCompanyId) {
+  let companyId: string
+
+  if (resolvedRole === 'staff') {
+    if (!requestedCompanyId) {
+      throw new AppError('Company ID is required for staff accounts. Ask your admin for the company ID.', 400)
+    }
+
     const companyExists = await UserModel.exists({ companyId: requestedCompanyId })
     if (!companyExists) {
+      throw new AppError('Company not found. Ask your admin for the correct company ID.', 404)
+    }
+
+    companyId = requestedCompanyId
+  } else {
+    if (requestedCompanyId) {
       throw new AppError(
-        'Company not found. Leave company ID blank for a personal workspace or ask your admin for the correct ID.',
-        404,
+        'Admin accounts receive a company ID after company setup. Leave company ID blank during account registration.',
+        400,
       )
     }
+
+    let pendingCompanyId = generatePendingCompanyId()
+    while (await UserModel.exists({ companyId: pendingCompanyId })) {
+      pendingCompanyId = generatePendingCompanyId()
+    }
+
+    companyId = pendingCompanyId
   }
 
   const user = await UserModel.create({

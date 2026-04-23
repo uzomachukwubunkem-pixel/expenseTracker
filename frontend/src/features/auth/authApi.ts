@@ -40,6 +40,13 @@ interface AuthUser {
   companyId: string
 }
 
+interface RegisterResponse {
+  success: boolean
+  data: AuthUser & {
+    isEmailVerified: boolean
+  }
+}
+
 interface LoginResponse {
   success: boolean
   data: {
@@ -62,7 +69,7 @@ interface MeResponse {
 
 export const authApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    register: builder.mutation<{ success: boolean; data: unknown }, RegisterRequest>({
+    register: builder.mutation<RegisterResponse, RegisterRequest>({
       query: (body) => ({
         url: '/auth/register',
         method: 'POST',

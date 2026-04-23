@@ -8,6 +8,15 @@ export const registerSchema = z
     role: z.enum(['admin', 'staff']).optional(),
     companyId: z.string().max(100).optional(),
   })
+  .superRefine((data, ctx) => {
+    if (data.role === 'staff' && !data.companyId?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['companyId'],
+        message: 'Company ID is required for staff accounts',
+      })
+    }
+  })
   .strict()
 
 export const loginSchema = z

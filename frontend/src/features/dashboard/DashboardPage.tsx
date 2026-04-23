@@ -10,7 +10,8 @@ import {
 import { formatNaira } from '../../utils/formatHelpers'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
-import { useAppSelector } from '../../hooks/redux'
+import { useAppDispatch, useAppSelector } from '../../hooks/redux'
+import { setUserCompanyId } from '../auth/authSlice'
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
   if (typeof error !== 'object' || error === null) return fallback
@@ -27,7 +28,9 @@ type DraftCompanySettings = {
 }
 
 export function DashboardPage() {
+  const dispatch = useAppDispatch()
   const authUser = useAppSelector((state) => state.auth.user)
+  const isAdmin = authUser?.role === 'admin'
 
   const { start, end, currentMonthLabel } = useMemo(() => {
     const now = new Date()
@@ -57,11 +60,14 @@ export function DashboardPage() {
     setSettingsInfo('')
 
     try {
-      await upsertCompanySettings({
+      const response = await upsertCompanySettings({
         legalName,
         taxId,
         yearlyTurnover: Number(yearlyTurnover),
       }).unwrap()
+      if (response.data.companyId) {
+        dispatch(setUserCompanyId(response.data.companyId))
+      }
       setSettingsInfo('Company settings saved successfully.')
       setDraftSettings(null)
     } catch (err: unknown) {
@@ -127,10 +133,10 @@ export function DashboardPage() {
             </p>
           </article>
 
-          {needsOnboarding ? (
+          {needsOnboarding && isAdmin ? (
             <article className="card">
               <h2>Company Setup</h2>
-              <p className="muted">Add your business details so turnover alerts and tax summary use real data.</p>
+              <p className="muted">Add your business details to register your company and generate a shareable company ID.</p>
               <form className="form-grid" onSubmit={saveCompanySettings}>
                 <label>
                   Legal business name
@@ -185,6 +191,13 @@ export function DashboardPage() {
                   {isSavingSettings ? 'Saving...' : 'Save company settings'}
                 </Button>
               </form>
+            </article>
+          ) : null}
+
+          {needsOnboarding && !isAdmin ? (
+            <article className="card">
+              <h2>Company Setup Pending</h2>
+              <p className="muted">An admin must complete company setup before full reporting and staff onboarding are available.</p>
             </article>
           ) : null}
 
