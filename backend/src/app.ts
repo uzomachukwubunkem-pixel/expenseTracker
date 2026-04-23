@@ -23,6 +23,16 @@ if (env.trustProxy) {
 
 const allowedOrigins = env.corsAllowedOrigins.length > 0 ? env.corsAllowedOrigins : [env.frontendUrl]
 
+const normalizeOrigin = (value: string): string => {
+  try {
+    return new URL(value).origin.toLowerCase()
+  } catch {
+    return value.trim().replace(/\/+$/, '').toLowerCase()
+  }
+}
+
+const allowedOriginSet = new Set(allowedOrigins.map(normalizeOrigin))
+
 app.use(helmet())
 app.use(
   cors({
@@ -32,7 +42,7 @@ app.use(
         return
       }
 
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOriginSet.has(normalizeOrigin(origin))) {
         callback(null, true)
         return
       }
