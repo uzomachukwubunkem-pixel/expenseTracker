@@ -19,21 +19,31 @@ if (env.trustProxy) {
     app.set('trust proxy', 1);
 }
 const allowedOrigins = env.corsAllowedOrigins.length > 0 ? env.corsAllowedOrigins : [env.frontendUrl];
+const normalizeOrigin = (value) => {
+    try {
+        return new URL(value).origin.toLowerCase();
+    }
+    catch {
+        return value.trim().replace(/\/+$/, '').toLowerCase();
+    }
+};
+const allowedOriginSet = new Set(allowedOrigins.map(normalizeOrigin));
 app.use(helmet());
-app.use(cors({
+const corsOptions = {
     origin: (origin, callback) => {
         if (!origin) {
             callback(null, true);
             return;
         }
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-            return;
-        }
-        callback(new Error('CORS origin not allowed'));
+        callback(null, allowedOriginSet.has(normalizeOrigin(origin)));
     },
     credentials: true,
-}));
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 204,
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(morgan('tiny'));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());

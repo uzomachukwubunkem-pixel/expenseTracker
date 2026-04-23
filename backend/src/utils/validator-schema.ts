@@ -8,6 +8,7 @@ export const registerSchema = z
     role: z.enum(['admin', 'staff']).optional(),
     companyId: z.string().max(100).optional(),
   })
+  .strict()
   .superRefine((data, ctx) => {
     if (data.role === 'staff' && !data.companyId?.trim()) {
       ctx.addIssue({
@@ -17,7 +18,6 @@ export const registerSchema = z
       })
     }
   })
-  .strict()
 
 export const loginSchema = z
   .object({

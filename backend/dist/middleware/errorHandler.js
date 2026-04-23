@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 import { ZodError } from 'zod';
 import { AppError } from '../utils/appError';
 import { logger } from '../utils/logger';
@@ -36,6 +37,13 @@ export const errorHandler = (err, _req, res, _next) => {
         res.status(400).json({
             success: false,
             message: `Invalid value for ${err.path}`,
+        });
+        return;
+    }
+    if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
+        res.status(401).json({
+            success: false,
+            message: 'Invalid or expired token',
         });
         return;
     }

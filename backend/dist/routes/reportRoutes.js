@@ -8,4 +8,4 @@ reportRouter.get('/vat-return', requireRole(['admin']), vatReturnHandler);
 reportRouter.get('/cit-return', requireRole(['admin']), citReturnHandler);
 reportRouter.get('/alerts', requireRole(['admin']), alertsHandler);
 reportRouter.get('/company-settings', requireRole(['admin', 'staff']), getCompanySettingsHandler);
-reportRouter.put('/company-settings', requireRole(['admin', 'staff']), upsertCompanySettingsHandler);
+reportRouter.put('/company-settings', requireRole(['admin']), upsertCompanySettingsHandler);

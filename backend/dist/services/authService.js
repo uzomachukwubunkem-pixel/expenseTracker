@@ -10,7 +10,8 @@ const hashVerificationCode = (code) => crypto.createHash('sha256').update(code).
 const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 const normalizeCompanyId = (value) => value.trim().toLowerCase();
 const normalizeEmail = (value) => value.trim().toLowerCase();
-const generatePersonalCompanyId = () => `solo-${randomId()}`;
+const generateCompanyId = () => `cmp-${randomId()}`;
+const generatePendingCompanyId = () => `pending-${randomId()}`;
 const generateVerificationCode = () => Math.floor(100000 + Math.random() * 900000).toString();
 const issueEmailVerificationCode = async (user) => {
     const code = generateVerificationCode();
@@ -38,15 +39,29 @@ export const register = async (payload) => {
     const requestedCompanyId = parsed.companyId?.trim()
         ? normalizeCompanyId(parsed.companyId)
         : undefined;
-    let companyId = requestedCompanyId ?? generatePersonalCompanyId();
     const exists = await UserModel.findOne({ email }).lean();
     if (exists)
         throw new AppError('Email already in use', 409);
-    if (resolvedRole === 'staff' && requestedCompanyId) {
+    let companyId;
+    if (resolvedRole === 'staff') {
+        if (!requestedCompanyId) {
+            throw new AppError('Company ID is required for staff accounts. Ask your admin for the company ID.', 400);
+        }
         const companyExists = await UserModel.exists({ companyId: requestedCompanyId });
         if (!companyExists) {
-            throw new AppError('Company not found. Leave company ID blank for a personal workspace or ask your admin for the correct ID.', 404);
+            throw new AppError('Company not found. Ask your admin for the correct company ID.', 404);
         }
+        companyId = requestedCompanyId;
+    }
+    else {
+        if (requestedCompanyId) {
+            throw new AppError('Admin accounts receive a company ID after company setup. Leave company ID blank during account registration.', 400);
+        }
+        let pendingCompanyId = generatePendingCompanyId();
+        while (await UserModel.exists({ companyId: pendingCompanyId })) {
+            pendingCompanyId = generatePendingCompanyId();
+        }
+        companyId = pendingCompanyId;
     }
     const user = await UserModel.create({
         name: parsed.name,

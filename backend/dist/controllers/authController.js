@@ -1,5 +1,6 @@
 import { env } from '../config/env';
 import { asyncHandler } from '../middleware/asyncHandler';
+import { AppError } from '../utils/appError';
 import { login, logout, register, requestPasswordReset, rotateRefreshToken, resetPassword, sendVerificationCode, verifyEmailCode, } from '../services/authService';
 const refreshCookieOptions = {
     httpOnly: true,
@@ -35,6 +36,9 @@ export const loginHandler = asyncHandler(async (req, res) => {
 });
 export const refreshTokenHandler = asyncHandler(async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+        throw new AppError('Missing refresh token', 401);
+    }
     const result = await rotateRefreshToken(refreshToken);
     res.cookie('refreshToken', result.refreshToken, refreshCookieOptions);
     res.json({ success: true, data: { accessToken: result.accessToken } });

@@ -32,7 +32,15 @@ export const getCompanySettingsHandler = asyncHandler(async (_req, res) => {
     res.json({ success: true, data });
 });
 export const upsertCompanySettingsHandler = asyncHandler(async (req, res) => {
-    const data = await upsertCompanySettings(req.body);
+    if (!req.user) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+    }
+    const data = await upsertCompanySettings(req.body, {
+        userId: req.user.userId,
+        role: req.user.role,
+        companyId: req.user.companyId,
+    });
     res.json({ success: true, data });
 });
 export const vatReturnHandler = asyncHandler(async (req, res) => {
