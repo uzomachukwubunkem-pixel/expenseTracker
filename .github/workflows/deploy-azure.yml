@@ -61,6 +61,52 @@ jobs:
           docker push "$FRONTEND_IMAGE"
           echo "FRONTEND_IMAGE=$FRONTEND_IMAGE" >> "$GITHUB_ENV"
 
+      - name: Ensure Frontend Container App Exists
+        run: |
+          if az containerapp show --name "$FRONTEND_APP_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
+            echo "Frontend app exists"
+          else
+            az containerapp create \
+              --name "$FRONTEND_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --environment "${{ vars.AZURE_CONTAINERAPPS_ENV_NAME }}" \
+              --image "$FRONTEND_IMAGE" \
+              --target-port 80 \
+              --ingress external \
+              --registry-server "$ACR_LOGIN_SERVER" \
+              --registry-username "${{ secrets.ACR_USERNAME }}" \
+              --registry-password "${{ secrets.ACR_PASSWORD }}"
+          fi
+
+      - name: Update Frontend Container App
+        run: |
+          az containerapp update \
+            --name "$FRONTEND_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "$FRONTEND_IMAGE"
+
+      - name: Resolve Frontend Origin
+        run: |
+          FRONTEND_FQDN=$(az containerapp show \
+            --name "$FRONTEND_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv)
+
+          FRONTEND_URL="https://$FRONTEND_FQDN"
+          RAW_CORS_ORIGINS='${{ vars.CORS_ALLOWED_ORIGINS }}'
+
+          if [ -z "$RAW_CORS_ORIGINS" ]; then
+            EFFECTIVE_CORS_ORIGINS="$FRONTEND_URL"
+          elif printf '%s' "$RAW_CORS_ORIGINS" | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep -Fxq "$FRONTEND_URL"; then
+            EFFECTIVE_CORS_ORIGINS="$RAW_CORS_ORIGINS"
+          else
+            EFFECTIVE_CORS_ORIGINS="$RAW_CORS_ORIGINS,$FRONTEND_URL"
+          fi
+
+          echo "FRONTEND_URL=$FRONTEND_URL" >> "$GITHUB_ENV"
+          echo "CORS_ALLOWED_ORIGINS=$EFFECTIVE_CORS_ORIGINS" >> "$GITHUB_ENV"
+
       - name: Ensure Backend Container App Exists
         run: |
           if az containerapp show --name "$BACKEND_APP_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
@@ -81,8 +127,8 @@ jobs:
                 PORT=5000 \
                 COOKIE_SECURE=true \
                 TRUST_PROXY=true \
-                FRONTEND_URL="${{ vars.FRONTEND_URL }}" \
-                CORS_ALLOWED_ORIGINS="${{ vars.CORS_ALLOWED_ORIGINS }}" \
+                FRONTEND_URL="$FRONTEND_URL" \
+                CORS_ALLOWED_ORIGINS="$CORS_ALLOWED_ORIGINS" \
                 MONGODB_URI="${{ secrets.MONGODB_URI }}" \
                 JWT_ACCESS_SECRET="${{ secrets.JWT_ACCESS_SECRET }}" \
                 JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}" \
@@ -91,23 +137,6 @@ jobs:
                 SMTP_USER="${{ secrets.SMTP_USER }}" \
                 SMTP_PASS="${{ secrets.SMTP_PASS }}" \
                 SMTP_FROM="${{ secrets.SMTP_FROM }}"
-          fi
-
-      - name: Ensure Frontend Container App Exists
-        run: |
-          if az containerapp show --name "$FRONTEND_APP_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
-            echo "Frontend app exists"
-          else
-            az containerapp create \
-              --name "$FRONTEND_APP_NAME" \
-              --resource-group "$RESOURCE_GROUP" \
-              --environment "${{ vars.AZURE_CONTAINERAPPS_ENV_NAME }}" \
-              --image "$FRONTEND_IMAGE" \
-              --target-port 80 \
-              --ingress external \
-              --registry-server "$ACR_LOGIN_SERVER" \
-              --registry-username "${{ secrets.ACR_USERNAME }}" \
-              --registry-password "${{ secrets.ACR_PASSWORD }}"
           fi
 
       - name: Update Backend Container App
@@ -121,8 +150,8 @@ jobs:
               PORT=5000 \
               COOKIE_SECURE=true \
               TRUST_PROXY=true \
-              FRONTEND_URL="${{ vars.FRONTEND_URL }}" \
-              CORS_ALLOWED_ORIGINS="${{ vars.CORS_ALLOWED_ORIGINS }}" \
+              FRONTEND_URL="$FRONTEND_URL" \
+              CORS_ALLOWED_ORIGINS="$CORS_ALLOWED_ORIGINS" \
               MONGODB_URI="${{ secrets.MONGODB_URI }}" \
               JWT_ACCESS_SECRET="${{ secrets.JWT_ACCESS_SECRET }}" \
               JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}" \
@@ -131,13 +160,6 @@ jobs:
               SMTP_USER="${{ secrets.SMTP_USER }}" \
               SMTP_PASS="${{ secrets.SMTP_PASS }}" \
               SMTP_FROM="${{ secrets.SMTP_FROM }}"
-
-      - name: Update Frontend Container App
-        run: |
-          az containerapp update \
-            --name "$FRONTEND_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --image "$FRONTEND_IMAGE"
 
       - name: Deployment Summary
         run: |

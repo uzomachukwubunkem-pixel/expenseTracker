@@ -192,6 +192,7 @@ Critical runtime vars include:
 
 - Backend currently targets Azure Container Apps in project workflows.
 - Keep backend env vars synchronized on every deploy (image + env update) to avoid config drift.
+- The deployment workflow resolves the live frontend Container App URL and feeds it back into `FRONTEND_URL` and `CORS_ALLOWED_ORIGINS` so CORS stays aligned with the deployed frontend origin.
 - Ensure MongoDB Atlas network access allows Container Apps egress.
 - Validate CORS with explicit OPTIONS checks after each deploy.
 
